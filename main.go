@@ -50,6 +50,7 @@ func main() {
 			loginCmd.PrintDefaults()
 			os.Exit(1)
 		}
+		// TODO: call API and print result.
 
 		fmt.Println(*cid)
 		fmt.Println(*user)
