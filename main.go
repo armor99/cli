@@ -8,11 +8,15 @@ import (
 )
 
 func main() {
+	// login subcommand setup
+	var loginParams params
 	loginCmd := flag.NewFlagSet("login", flag.ExitOnError)
-	cid := loginCmd.Int("cid", 0, "Customer ID <required>")
-	user := loginCmd.String("u", "", "User ID <required>")
-	pw := loginCmd.String("p", "", "User password <required>")
+	loginParams.CID = loginCmd.Int("cid", 0, "Customer ID <required>")
+	loginParams.User = loginCmd.String("u", "", "User ID <required>")
+	loginParams.Passwd = loginCmd.String("p", "", "User password <required>")
+	loginParams.URL = loginCmd.String("h", "", "API URL <required>")
 
+	// add-user subcommand setup
 	addUserCmd := flag.NewFlagSet("add-user", flag.ExitOnError)
 	cid2 := addUserCmd.Int("cid", 0, "Customer ID")
 	user2 := addUserCmd.String("u", "", "User ID")
@@ -34,28 +38,9 @@ func main() {
 		fmt.Println("Invalid subcommand or option.")
 	}
 
+	// Execute subcommands
 	if loginCmd.Parsed() {
-		if *cid == 0 {
-			fmt.Println("Subcommand login: Customer ID is required")
-			loginCmd.PrintDefaults()
-			os.Exit(1)
-		}
-		if *user == "" {
-			fmt.Println("Subcommand login: User ID is required")
-			loginCmd.PrintDefaults()
-			os.Exit(1)
-		}
-		if *pw == "" {
-			fmt.Println("Subcommand login: Password is required")
-			loginCmd.PrintDefaults()
-			os.Exit(1)
-		}
-		// TODO: call API and print result.
-
-		fmt.Println(*cid)
-		fmt.Println(*user)
-		fmt.Println(*pw)
-		os.Exit(0)
+		loginHandler(loginCmd, loginParams)
 	}
 
 	if addUserCmd.Parsed() {
