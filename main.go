@@ -22,8 +22,11 @@ func main() {
 	user2 := addUserCmd.String("u", "", "User ID")
 	pw2 := addUserCmd.String("p", "", "User password")
 
+	// TODO: Is this the right way to handler missing or invalid commands.
 	if len(os.Args) == 1 {
-		fmt.Println("Missing subcommand or valid option.")
+		fmt.Println(`Subcommand required:
+ - login
+ - add-user`)
 		os.Exit(0)
 	}
 
