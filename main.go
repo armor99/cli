@@ -1,55 +1,49 @@
 package main
 
 import (
-	"flag"
 	"fmt"
+	"io/ioutil"
+	"log"
 	"os"
-	"strings"
+	"os/user"
+	"path/filepath"
+	"time"
 )
 
 func main() {
-	// login subcommand setup
-	var loginParams params
-	loginCmd := flag.NewFlagSet("login", flag.ExitOnError)
-	loginParams.CID = loginCmd.Int("cid", 0, "Customer ID <required>")
-	loginParams.User = loginCmd.String("u", "", "User ID <required>")
-	loginParams.Passwd = loginCmd.String("p", "", "User password <required>")
-	loginParams.URL = loginCmd.String("h", "", "API URL <required>")
+	t := time.Now()
+	tStr := t.Format("2006-01-02 15:04:05")
+	fmt.Printf("Timestamp: %s\n", tStr)
 
-	// add-user subcommand setup
-	addUserCmd := flag.NewFlagSet("add-user", flag.ExitOnError)
-	cid2 := addUserCmd.Int("cid", 0, "Customer ID")
-	user2 := addUserCmd.String("u", "", "User ID")
-	pw2 := addUserCmd.String("p", "", "User password")
+	usr, err := user.Current()
+	if err != nil {
+		log.Fatal(err)
+	}
+	homePath := usr.HomeDir
+	dirPath := filepath.Join(homePath, ".idaas")
+	configPath := filepath.Join(dirPath, "config.json")
+	fmt.Printf("Path: %s\n", configPath)
 
-	if len(os.Args) == 1 {
-		fmt.Println("Missing subcommand or valid option.")
-		os.Exit(0)
+	// Create directory if doesn't exist
+	_, err = os.Stat(dirPath)
+	if os.IsNotExist(err) {
+		err = os.MkdirAll(dirPath, 0755)
+		if err != nil {
+			log.Fatalf("Error creating directory: %s\n", err)
+		}
 	}
 
-	cmd := strings.ToLower(os.Args[1])
-	//os.Args = append(os.Args[:1], os.Args[2:]...)
-	switch cmd {
-	case "login":
-		loginCmd.Parse(os.Args[2:])
-	case "-v", "--v", "-version", "--version":
-		fmt.Println("CLI version: 1.0")
-	default:
-		fmt.Println("Invalid subcommand or option.")
+	// Read file contents
+	content, err := ioutil.ReadFile(configPath)
+	if !os.IsNotExist(err) && err != nil {
+		log.Fatal(err)
 	}
+	fmt.Printf("Old file content: %s", content)
 
-	// Execute subcommands
-	if loginCmd.Parsed() {
-		loginHandler(loginCmd, loginParams)
+	// Overwrite file whether it exists or not.
+	content = []byte(tStr)
+	err = ioutil.WriteFile(configPath, content, 777)
+	if err != nil {
+		log.Fatal(err)
 	}
-
-	if addUserCmd.Parsed() {
-		fmt.Println(*cid2)
-		fmt.Println(*user2)
-		fmt.Println(*pw2)
-		os.Exit(0)
-	}
-
-	fmt.Println(cmd)
-	fmt.Println(len(os.Args))
 }
