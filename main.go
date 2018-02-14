@@ -52,7 +52,4 @@ func main() {
 		fmt.Println(*pw2)
 		os.Exit(0)
 	}
-
-	fmt.Println(cmd)
-	fmt.Println(len(os.Args))
 }

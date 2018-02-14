@@ -14,3 +14,8 @@ type config struct {
 	Atoken     string `json:"access_token,omitempty"`
 	Rtoken     string `json:"refresh_token,omitempty"`
 }
+
+type login struct {
+	CustomerID int    `json:"customer_id,omitempty"`
+	IP         string `json:"ip_address,omitempty"`
+}

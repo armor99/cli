@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -11,7 +12,6 @@ import (
 	"os"
 	"os/user"
 	"path/filepath"
-	"strings"
 )
 
 func loginHandler(l *flag.FlagSet, p params) {
@@ -62,24 +62,40 @@ func loginHandler(l *flag.FlagSet, p params) {
 		os.Exit(1)
 	}
 
-	// TODO: have valid access token? Yes, then done, no,continue.
+	// TODO: Exit if access token valid
 
-	// TODO: have valid refresh token? Yes, then get new access, no, continue
+	// TODO: Exit if refresh token valid
 
-	// TODO: call API and print result.
-	u := url.URL{Scheme: "http", Host: "127.0.0.1:3000", Path: "api/v1/auth/token"}
-	client := &http.Client{}
-	req, err := http.NewRequest("POST", u.String(), strings.NewReader("test"))
+	body := login{CustomerID: c.CustomerID, IP: "127.0.0.1"}
+	bodyJSON, err := json.Marshal(body)
 	if err != nil {
 		log.Fatal(err)
 	}
+	u := url.URL{Scheme: "http", Host: "127.0.0.1:3000", Path: "api/v1/auth/token"}
+	client := &http.Client{}
+	req, err := http.NewRequest("POST", u.String(), bytes.NewReader(bodyJSON))
+	if err != nil {
+		log.Fatal(err)
+	}
+	auth := encodeBasicAuth(c.UserID, *p.Passwd)
+	// TODO: remove
+	log.Printf("Authorization: %s\n", auth)
 	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("Authorization", auth)
 	resp, err := client.Do(req)
 	if err != nil {
 		log.Fatalf("Error making http request: %v\n", err)
 	}
 	defer resp.Body.Close()
+	// TODO: remove below
+	log.Printf("Response status: %v\n", resp.Status)
+	b, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Fatalf("Error reading response body: %v\n", err)
+	}
+	log.Println(string(b))
 
+	// TODO: Unmarshal body (b) to obtain access & refresh tokens
 	// Create directory if doesn't exist
 	_, err = os.Stat(dirPath)
 	if os.IsNotExist(err) {
