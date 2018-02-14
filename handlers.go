@@ -67,22 +67,18 @@ func loginHandler(l *flag.FlagSet, p params) {
 	// TODO: have valid refresh token? Yes, then get new access, no, continue
 
 	// TODO: call API and print result.
-	//u, _ := url.ParseRequestURI("127.0.0.1:3000/api/v1/auth/token")
-	var u url.URL
-	u.Host = "127.0.0.1:3000"
-	u.Path = "api/v1/auth/token"
-	var client *http.Client
+	u := url.URL{Scheme: "http", Host: "127.0.0.1:3000", Path: "api/v1/auth/token"}
+	client := &http.Client{}
 	req, err := http.NewRequest("POST", u.String(), strings.NewReader("test"))
 	if err != nil {
 		log.Fatal(err)
 	}
-	//req.Header.Add("If-None-Match", `W/"wyzzy"`)
+	req.Header.Add("Content-Type", "application/json")
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Fatalln("Error making http request: %v\n", err)
+		log.Fatalf("Error making http request: %v\n", err)
 	}
 	defer resp.Body.Close()
-	log.Println(resp.Status)
 
 	// Create directory if doesn't exist
 	_, err = os.Stat(dirPath)
