@@ -96,6 +96,15 @@ func loginHandler(l *flag.FlagSet, p params) {
 	log.Println(string(b))
 
 	// TODO: Unmarshal body (b) to obtain access & refresh tokens
+	var res returnMsg
+	err = json.Unmarshal(b, &res)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	//TODO: should i check these are not empty first?
+	c.Atoken = res.Data[0].AccessToken
+	c.Rtoken = res.Data[0].RefreshToken
+
 	// Create directory if doesn't exist
 	_, err = os.Stat(dirPath)
 	if os.IsNotExist(err) {
