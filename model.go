@@ -7,10 +7,16 @@ type params struct {
 	URL    *string
 }
 
+type pwLogin struct {
+	CID    int
+	User   string
+	Passwd string
+	IP     string
+}
+
 type config struct {
 	UserID     string `json:"user_id,omitempty"`
 	CustomerID int    `json:"customer_id,omitempty"`
-	URL        string `json:"url,omitempty"`
 	Atoken     string `json:"access_token,omitempty"`
 	Rtoken     string `json:"refresh_token,omitempty"`
 }
@@ -39,4 +45,9 @@ type paging struct {
 type returnMsg struct {
 	Status returnStatus  `json:"status,omitempty"`
 	Data   []tokenReturn `json:"data,omitempty"`
+}
+
+type configFile struct {
+	DirPath  string
+	FilePath string
 }

@@ -31,7 +31,6 @@ func main() {
 	}
 
 	cmd := strings.ToLower(os.Args[1])
-	//os.Args = append(os.Args[:1], os.Args[2:]...)
 	switch cmd {
 	case "login":
 		loginCmd.Parse(os.Args[2:])
