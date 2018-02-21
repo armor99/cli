@@ -29,6 +29,9 @@ func validToken(t string) bool {
 	token, _ := jwt.Parse(t, func(token *jwt.Token) (interface{}, error) {
 		return nil, nil
 	})
+	if token == nil {
+		return false
+	}
 	claims, ok := token.Claims.(jwt.MapClaims)
 	if !ok {
 		return false
