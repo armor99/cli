@@ -175,3 +175,23 @@ func userLogin(c *config, pw string) error {
 
 	return nil
 }
+
+func getTID(t string) (int, error) {
+	token, _ := jwt.Parse(t, func(token *jwt.Token) (interface{}, error) {
+		return nil, nil
+	})
+	if token == nil {
+		return 0, errors.New("Parse token failed")
+	}
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok {
+		return 0, errors.New("Reading token claims failed")
+	}
+	tidClaim := claims["tid"]
+	if tidClaim == nil {
+		return 0, errors.New("Error reading tid claims")
+	}
+	tid := int(tidClaim.(float64))
+
+	return tid, nil
+}
