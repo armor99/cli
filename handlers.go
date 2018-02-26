@@ -47,14 +47,13 @@ func logoutHandler(l *flag.FlagSet, p params) {
 	if err != nil {
 		log.Fatalln(err)
 	}
-	log.Println(tid)
 	path := "api/v1/auth/token/" + strconv.Itoa(tid)
 	log.Println(path)
 	u := url.URL{Scheme: "http", Host: "127.0.0.1:3000", Path: path}
 	client := &http.Client{}
 	req, err := http.NewRequest("DELETE", u.String(), nil)
 	if err != nil {
-		log.Fatalln(err)
+		log.Fatalf("Error w/ DELETE token query: %s\n", err)
 	}
 	auth := "Bearer " + c.Atoken
 	req.Header.Add("Authorization", auth)
@@ -64,22 +63,22 @@ func logoutHandler(l *flag.FlagSet, p params) {
 	}
 	defer resp.Body.Close()
 
+	if resp.StatusCode != 200 {
+		log.Fatalln(resp.Status)
+	}
 	b, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		log.Fatalln(err)
 	}
 
 	var res returnMsg
+	log.Println(string(b))
 	err = json.Unmarshal(b, &res)
 	if err != nil {
 		log.Println(err)
 	}
-	if res.Status.Code != 200 {
-		log.Println(res.Status.Message)
-	}
 
 	// TODO: need to delete tokens from config file on success
-
 	return
 }
 
