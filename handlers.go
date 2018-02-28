@@ -78,7 +78,13 @@ func logoutHandler(l *flag.FlagSet, p params) {
 		log.Println(err)
 	}
 
-	// TODO: need to delete tokens from config file on success
+	c.Atoken = ""
+	c.Rtoken = ""
+	err = writeConfig(c)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
 	return
 }
 
