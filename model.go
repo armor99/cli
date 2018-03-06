@@ -7,6 +7,18 @@ type params struct {
 	URL    *string
 }
 
+type userParams struct {
+	CID        *int
+	User       *string
+	Email      *string
+	Role       *string
+	Firstname  *string
+	Lastname   *string
+	Address    *string
+	GroupID    *string
+	CustomAttr *string
+}
+
 type pwLogin struct {
 	CID    int
 	User   string

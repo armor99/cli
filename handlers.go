@@ -150,3 +150,15 @@ func loginHandler(l *flag.FlagSet, p params) {
 
 	return
 }
+
+func addUserHandler(l *flag.FlagSet, p userParams) {
+	// TODO:
+
+	// TODO: validate address is valid JSON
+
+	// TODO: validate group ID is valid JSON
+
+	// TODO: validate custom attributes is valid JSON
+
+	return
+}

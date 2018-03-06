@@ -23,10 +23,17 @@ func main() {
 	logoutParams.User = logoutCmd.String("u", "", "User ID")
 
 	// add-user subcommand setup
+	var addUserParams userParams
 	addUserCmd := flag.NewFlagSet("add-user", flag.ExitOnError)
-	cid2 := addUserCmd.Int("cid", 0, "Customer ID")
-	user2 := addUserCmd.String("u", "", "User ID")
-	pw2 := addUserCmd.String("p", "", "User password")
+	addUserParams.CID = addUserCmd.Int("cid", 0, "Customer ID")
+	addUserParams.User = addUserCmd.String("u", "", "User ID")
+	addUserParams.Email = addUserCmd.String("e", "", "User email")
+	addUserParams.Role = addUserCmd.String("r", "", "User role")
+	addUserParams.Firstname = addUserCmd.String("f", "", "User first name")
+	addUserParams.Lastname = addUserCmd.String("l", "", "User last name")
+	addUserParams.Address = addUserCmd.String("a", "", "User address")
+	addUserParams.GroupID = addUserCmd.String("g", "", "User's group IDs")
+	addUserParams.CustomAttr = addUserCmd.String("c", "", "User's custom attributes")
 
 	if len(os.Args) == 1 {
 		fmt.Println(`Subcommand required:
@@ -47,18 +54,14 @@ func main() {
 		fmt.Println("Invalid subcommand or option.")
 	}
 
-	// Execute subcommands
+	// Execute subcommand
 	if loginCmd.Parsed() {
 		loginHandler(loginCmd, loginParams)
 	}
 	if logoutCmd.Parsed() {
 		logoutHandler(logoutCmd, logoutParams)
 	}
-
 	if addUserCmd.Parsed() {
-		fmt.Println(*cid2)
-		fmt.Println(*user2)
-		fmt.Println(*pw2)
-		os.Exit(0)
+		addUserHandler(addUserCmd, addUserParams)
 	}
 }
