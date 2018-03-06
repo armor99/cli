@@ -48,6 +48,8 @@ func main() {
 		loginCmd.Parse(os.Args[2:])
 	case "logout":
 		logoutCmd.Parse(os.Args[2:])
+	case "add-user":
+		addUserCmd.Parse(os.Args[2:])
 	case "-v", "--v", "-version", "--version":
 		fmt.Println("CLI version: 1.0")
 	default:

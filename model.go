@@ -63,3 +63,15 @@ type configFile struct {
 	DirPath  string
 	FilePath string
 }
+
+type userNew struct {
+	CustomerID int                    `json:"customer_id"`
+	UserID     string                 `json:"user_id"`
+	Email      string                 `json:"email"`
+	Role       string                 `json:"role"`
+	Firstname  string                 `json:"firstname,omitempty"`
+	Lastname   string                 `json:"lastname,omitempty"`
+	Address    map[string]interface{} `json:"address,omitempty"`     // JSON object
+	GroupID    []interface{}          `json:"group_id,omitempty"`    // JSON array
+	CustomAttr map[string]interface{} `json:"custom_attr,omitempty"` // JSON object
+}
