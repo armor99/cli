@@ -153,6 +153,7 @@ func loginHandler(l *flag.FlagSet, p params) {
 }
 
 func addUserHandler(l *flag.FlagSet, p userParams) {
+	var u userNew
 	c, _ := readConfig()
 	if *p.CID == 0 {
 		fmt.Println("Subcommand login: Customer ID is required")
@@ -164,66 +165,61 @@ func addUserHandler(l *flag.FlagSet, p userParams) {
 		l.PrintDefaults()
 		os.Exit(1)
 	}
-	if *p.Role == "" {
-		*p.Role = "user"
-	}
-
 	if !validToken(c.Rtoken) {
 		fmt.Println("User not logged in.")
 		os.Exit(0)
 	}
 	if !validToken(c.Atoken) {
-		c, err := refreshToken(c)
+		newToken, err := refreshToken(c)
 		if err != nil {
 			log.Fatalln(err)
 		}
+		c = newToken
 		err = writeConfig(c)
 		if err != nil {
 			log.Fatalln(err)
 		}
 	}
 
-	// TODO: validate address is valid JSON
+	// Validate input
+	u.CustomerID = *p.CID
+	u.Email = *p.Email
+	if *p.User == "" {
+		u.UserID = u.Email
+	} else {
+		u.UserID = *p.User
+	}
+	if *p.Role == "" {
+		*p.Role = "user"
+	}
+	u.Role = *p.Role
+	u.Firstname = *p.Firstname
+	u.Lastname = *p.Lastname
+	err := json.Unmarshal([]byte(*p.Address), &u.Address)
+	if err != nil && *p.Address != "" {
+		log.Fatalln("Address not valid JSON.")
+	}
+	err = json.Unmarshal([]byte(*p.GroupID), &u.GroupID)
+	if err != nil && *p.GroupID != "" {
+		log.Fatalln("Group ID not valid JSON array.")
+	}
+	err = json.Unmarshal([]byte(*p.CustomAttr), &u.CustomAttr)
+	if err != nil && *p.CustomAttr != "" {
+		log.Fatalln("Customer Attributes not valid JSON.")
+	}
 
-	// TODO: validate group ID is valid JSON
-
-	// TODO: validate custom attributes is valid JSON
-
-	// TODO: make API call using real params
-
-	apiBody := `
-	{
-		"customer_id": 1,
-		"user_id": "mike98",
-		"email": "mmillsap98@cox.net",
-		"firstname": "Mike",
-		"lastname": "Miller",
-		"address": {
-		  "address1": "3103 E Killarney St",
-		  "address2": "",
-		  "city": "Gilbert",
-		  "state": "AZ",
-		  "zip": 85298
-		},
-		"group_id": [
-		  12345,
-		  12346,
-		  12347,
-		  12348
-		],
-		"role": "user",
-		"custom_attr": {"name":"sap"}
-	}`
-
-	u := url.URL{Scheme: "http", Host: "127.0.0.1:3000", Path: "api/v1/user"}
+	body, err := json.Marshal(u)
+	if err != nil {
+		log.Fatalln("Error converting parameters to JOSN.")
+	}
+	apiURL := url.URL{Scheme: "http", Host: "127.0.0.1:3000", Path: "api/v1/user"}
 	client := &http.Client{}
-	req, err := http.NewRequest("POST", u.String(), strings.NewReader(apiBody))
+	req, err := http.NewRequest("POST", apiURL.String(), strings.NewReader(string(body)))
 	if err != nil {
 		log.Fatalf("Error w/ adduser query: %s\n", err)
 	}
 	auth := "Bearer " + c.Atoken
 	req.Header.Add("Authorization", auth)
-
 	resp, err := client.Do(req)
 	if err != nil {
 		log.Fatalln(err)
@@ -238,11 +234,12 @@ func addUserHandler(l *flag.FlagSet, p userParams) {
 		log.Fatalln(err)
 	}
 
+	// TODO: Need to handle the data object returned from API. Create struct to unmarshal into.
 	var res returnMsg
 	log.Println(string(b))
 	err = json.Unmarshal(b, &res)
 	if err != nil {
-		log.Println(err)
+		log.Printf("Error parsing JSON response from API call. %v\n", err)
 	}
 
 	return
