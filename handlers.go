@@ -216,7 +216,7 @@ func addUserHandler(l *flag.FlagSet, p userParams) {
 	client := &http.Client{}
 	req, err := http.NewRequest("POST", apiURL.String(), strings.NewReader(string(body)))
 	if err != nil {
-		log.Fatalf("Error w/ adduser query: %s\n", err)
+		log.Fatalf("Error w/ adduser API call: %s\n", err)
 	}
 	auth := "Bearer " + c.Atoken
 	req.Header.Add("Authorization", auth)
@@ -246,18 +246,10 @@ func addUserHandler(l *flag.FlagSet, p userParams) {
 }
 
 func listUserHandler(l *flag.FlagSet, p userParams) {
-	var u userNew
+
+	// TODO: sysadmin needs to be able to list users for any customerID. Enable this via the list users endpoint.
+
 	c, _ := readConfig()
-	if *p.CID == 0 {
-		fmt.Println("Subcommand login: Customer ID is required")
-		l.PrintDefaults()
-		os.Exit(1)
-	}
-	if *p.Email == "" {
-		fmt.Println("Subcommand login: User email is required")
-		l.PrintDefaults()
-		os.Exit(1)
-	}
 	if !validToken(c.Rtoken) {
 		fmt.Println("User not logged in.")
 		os.Exit(0)
@@ -274,42 +266,12 @@ func listUserHandler(l *flag.FlagSet, p userParams) {
 		}
 	}
 
-	// Validate input
-	u.CustomerID = *p.CID
-	u.Email = *p.Email
-	if *p.User == "" {
-		u.UserID = u.Email
-	} else {
-		u.UserID = *p.User
-	}
-	if *p.Role == "" {
-		*p.Role = "user"
-	}
-	u.Role = *p.Role
-	u.Firstname = *p.Firstname
-	u.Lastname = *p.Lastname
-	err := json.Unmarshal([]byte(*p.Address), &u.Address)
-	if err != nil && *p.Address != "" {
-		log.Fatalln("Address not valid JSON.")
-	}
-	err = json.Unmarshal([]byte(*p.GroupID), &u.GroupID)
-	if err != nil && *p.GroupID != "" {
-		log.Fatalln("Group ID not valid JSON array.")
-	}
-	err = json.Unmarshal([]byte(*p.CustomAttr), &u.CustomAttr)
-	if err != nil && *p.CustomAttr != "" {
-		log.Fatalln("Customer Attributes not valid JSON.")
-	}
-
-	body, err := json.Marshal(u)
-	if err != nil {
-		log.Fatalln("Error converting parameters to JOSN.")
-	}
+	// TODO: Is user checked to be admin before calling API?
 	apiURL := url.URL{Scheme: "http", Host: "127.0.0.1:3000", Path: "api/v1/user"}
 	client := &http.Client{}
-	req, err := http.NewRequest("POST", apiURL.String(), strings.NewReader(string(body)))
+	req, err := http.NewRequest("GET", apiURL.String(), nil)
 	if err != nil {
-		log.Fatalf("Error w/ adduser query: %s\n", err)
+		log.Fatalf("Error w/ listuser API call: %s\n", err)
 	}
 	auth := "Bearer " + c.Atoken
 	req.Header.Add("Authorization", auth)
@@ -326,6 +288,10 @@ func listUserHandler(l *flag.FlagSet, p userParams) {
 	if err != nil {
 		log.Fatalln(err)
 	}
+
+	log.Println(string(b))
+
+	// TODO: Maybe add feature to automatically page results to screen. Keep pausing for keypress.
 
 	var res addUserRetMsg
 	err = json.Unmarshal(b, &res)

@@ -35,10 +35,19 @@ func main() {
 	addUserParams.GroupID = addUserCmd.String("g", "", "User's group IDs")
 	addUserParams.CustomAttr = addUserCmd.String("c", "", "User's custom attributes")
 
+	// add-user subcommand setup
+	var listUserParams userParams
+	listUserCmd := flag.NewFlagSet("list-users", flag.ExitOnError)
+	listUserParams.CID = listUserCmd.Int("cid", 0, "Customer ID")
+	listUserParams.User = listUserCmd.String("c", "", "Cursor")
+	listUserParams.Email = listUserCmd.String("l", "", "Limit")
+
 	if len(os.Args) == 1 {
 		fmt.Println(`Subcommand required:
  - login
- - add-user`)
+ - logout
+ - add-user
+ - list-users`)
 		os.Exit(0)
 	}
 
@@ -50,6 +59,8 @@ func main() {
 		logoutCmd.Parse(os.Args[2:])
 	case "add-user":
 		addUserCmd.Parse(os.Args[2:])
+	case "list-users":
+		listUserCmd.Parse(os.Args[2:])
 	case "-v", "--v", "-version", "--version":
 		fmt.Println("CLI version: 1.0")
 	default:
@@ -65,5 +76,8 @@ func main() {
 	}
 	if addUserCmd.Parsed() {
 		addUserHandler(addUserCmd, addUserParams)
+	}
+	if listUserCmd.Parsed() {
+		listUserHandler(listUserCmd, addUserParams)
 	}
 }
