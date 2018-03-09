@@ -234,13 +234,106 @@ func addUserHandler(l *flag.FlagSet, p userParams) {
 		log.Fatalln(err)
 	}
 
-	// TODO: Need to handle the data object returned from API. Create struct to unmarshal into.
-	var res returnMsg
-	log.Println(string(b))
+	var res addUserRetMsg
 	err = json.Unmarshal(b, &res)
 	if err != nil {
 		log.Printf("Error parsing JSON response from API call. %v\n", err)
 	}
+	// TODO: Return hash going forward or email to user?
+	log.Printf("\n\nUser %s created. PW Hash:\n\n%s\n\n", res.Data.UserID, res.Data.Hash)
+
+	return
+}
+
+func listUserHandler(l *flag.FlagSet, p userParams) {
+	var u userNew
+	c, _ := readConfig()
+	if *p.CID == 0 {
+		fmt.Println("Subcommand login: Customer ID is required")
+		l.PrintDefaults()
+		os.Exit(1)
+	}
+	if *p.Email == "" {
+		fmt.Println("Subcommand login: User email is required")
+		l.PrintDefaults()
+		os.Exit(1)
+	}
+	if !validToken(c.Rtoken) {
+		fmt.Println("User not logged in.")
+		os.Exit(0)
+	}
+	if !validToken(c.Atoken) {
+		newToken, err := refreshToken(c)
+		if err != nil {
+			log.Fatalln(err)
+		}
+		c = newToken
+		err = writeConfig(c)
+		if err != nil {
+			log.Fatalln(err)
+		}
+	}
+
+	// Validate input
+	u.CustomerID = *p.CID
+	u.Email = *p.Email
+	if *p.User == "" {
+		u.UserID = u.Email
+	} else {
+		u.UserID = *p.User
+	}
+	if *p.Role == "" {
+		*p.Role = "user"
+	}
+	u.Role = *p.Role
+	u.Firstname = *p.Firstname
+	u.Lastname = *p.Lastname
+	err := json.Unmarshal([]byte(*p.Address), &u.Address)
+	if err != nil && *p.Address != "" {
+		log.Fatalln("Address not valid JSON.")
+	}
+	err = json.Unmarshal([]byte(*p.GroupID), &u.GroupID)
+	if err != nil && *p.GroupID != "" {
+		log.Fatalln("Group ID not valid JSON array.")
+	}
+	err = json.Unmarshal([]byte(*p.CustomAttr), &u.CustomAttr)
+	if err != nil && *p.CustomAttr != "" {
+		log.Fatalln("Customer Attributes not valid JSON.")
+	}
+
+	body, err := json.Marshal(u)
+	if err != nil {
+		log.Fatalln("Error converting parameters to JOSN.")
+	}
+	apiURL := url.URL{Scheme: "http", Host: "127.0.0.1:3000", Path: "api/v1/user"}
+	client := &http.Client{}
+	req, err := http.NewRequest("POST", apiURL.String(), strings.NewReader(string(body)))
+	if err != nil {
+		log.Fatalf("Error w/ adduser query: %s\n", err)
+	}
+	auth := "Bearer " + c.Atoken
+	req.Header.Add("Authorization", auth)
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != 200 {
+		log.Fatalln(resp.Status)
+	}
+	b, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	var res addUserRetMsg
+	err = json.Unmarshal(b, &res)
+	if err != nil {
+		log.Printf("Error parsing JSON response from API call. %v\n", err)
+	}
+	// TODO: Return hash going forward or email to user?
+	log.Printf("\n\nUser %s created. PW Hash:\n\n%s\n\n", res.Data.UserID, res.Data.Hash)
 
 	return
 }

@@ -43,6 +43,13 @@ type tokenReturn struct {
 	RefreshToken string `json:"refresh_token,omitempty"`
 }
 
+type addUserRet struct {
+	UserID     string `json:"user_id,omitempty"`
+	CustomerID int    `json:"customer_id,omitempty"`
+	Hash       string `json:"hash,omitempty"`
+	Exp        int    `json:"expires_at,omitempty"`
+}
+
 type returnStatus struct {
 	Code    int    `json:"code,omitempty"`
 	Type    string `json:"type,omitempty"`
@@ -57,6 +64,11 @@ type paging struct {
 type returnMsg struct {
 	Status returnStatus  `json:"status,omitempty"`
 	Data   []tokenReturn `json:"data,omitempty"`
+}
+
+type addUserRetMsg struct {
+	Status returnStatus `json:"status,omitempty"`
+	Data   addUserRet   `json:"data,omitempty"`
 }
 
 type configFile struct {
