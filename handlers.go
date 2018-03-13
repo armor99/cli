@@ -222,16 +222,13 @@ func addUserHandler(l *flag.FlagSet, p userParams) {
 	req.Header.Add("Authorization", auth)
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Fatalln(err)
+		log.Fatalf("Error calling GET:/user endpoint - %v\n", err)
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != 200 {
-		log.Fatalln(resp.Status)
-	}
 	b, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		log.Fatalln(err)
+		log.Fatalf("Error reading GET:/user body - %v\n", err)
 	}
 
 	var res addUserRetMsg
@@ -239,8 +236,12 @@ func addUserHandler(l *flag.FlagSet, p userParams) {
 	if err != nil {
 		log.Printf("Error parsing JSON response from API call. %v\n", err)
 	}
-	// TODO: Return hash going forward or email to user?
-	log.Printf("\n\nUser %s created. PW Hash:\n\n%s\n\n", res.Data.UserID, res.Data.Hash)
+	if resp.StatusCode == 200 {
+		// TODO: Return hash going forward or email to user?
+		log.Printf("\n\nUser %s created. PW Hash:\n\n%s\n\n", res.Data.UserID, res.Data.Hash)
+	} else {
+		fmt.Printf("\nError: %s\n", res.Status.Message)
+	}
 
 	return
 }
