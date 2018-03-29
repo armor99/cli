@@ -87,3 +87,9 @@ type userNew struct {
 	GroupID    []interface{}          `json:"group_id,omitempty"`    // JSON array
 	CustomAttr map[string]interface{} `json:"custom_attr,omitempty"` // JSON object
 }
+
+type listUsers struct {
+	Status returnStatus `json:"status,omitempty"`
+	Page   paging       `json:"paging,omitempty"`
+	Data   []userNew    `json:"data,omitempty"`
+}

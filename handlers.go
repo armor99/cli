@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -49,7 +50,6 @@ func logoutHandler(l *flag.FlagSet, p params) {
 		log.Fatalln(err)
 	}
 	path := "api/v1/auth/token/" + strconv.Itoa(tid)
-	log.Println(path)
 	u := url.URL{Scheme: "http", Host: "127.0.0.1:3000", Path: path}
 	client := &http.Client{}
 	req, err := http.NewRequest("DELETE", u.String(), nil)
@@ -73,10 +73,14 @@ func logoutHandler(l *flag.FlagSet, p params) {
 	}
 
 	var res returnMsg
-	log.Println(string(b))
 	err = json.Unmarshal(b, &res)
 	if err != nil {
 		log.Println(err)
+	}
+	if res.Status.Code == 200 {
+		fmt.Printf("%s logged out", c.UserID)
+	} else {
+		log.Println(res.Status.Message)
 	}
 
 	c.Atoken = ""
@@ -100,22 +104,26 @@ func loginHandler(l *flag.FlagSet, p params) {
 		l.PrintDefaults()
 		os.Exit(1)
 	}
-	if *p.CID != 0 {
+	if *p.CID != 0 && *p.CID != c.CustomerID {
 		c.CustomerID = *p.CID
+		c.Atoken = ""
+		c.Rtoken = ""
+	}
+	if *p.User != "" && *p.User != c.UserID {
+		c.UserID = *p.User
+		c.Atoken = ""
+		c.Rtoken = ""
 	}
 	if *p.User == "" && c.UserID == "" {
 		fmt.Println("Subcommand login: User ID is required")
 		l.PrintDefaults()
 		os.Exit(1)
 	}
-	if *p.User != "" {
-		c.UserID = *p.User
-	}
+
 	if validToken(c.Atoken) {
 		fmt.Printf("%s is logged in\n", c.UserID)
 		os.Exit(0)
 	}
-	fmt.Println("Access token not valid")
 	if validToken(c.Rtoken) {
 		c, err := refreshToken(c)
 		if err != nil {
@@ -130,7 +138,6 @@ func loginHandler(l *flag.FlagSet, p params) {
 		os.Exit(0)
 	End:
 	}
-	fmt.Println("Refresh token not valid")
 	if *p.Passwd == "" {
 		fmt.Println("Subcommand login: Password is required")
 		l.PrintDefaults()
@@ -268,39 +275,54 @@ func listUserHandler(l *flag.FlagSet, p userParams) {
 	}
 
 	// TODO: Is user checked to be admin before calling API?
-	apiURL := url.URL{Scheme: "http", Host: "127.0.0.1:3000", Path: "api/v1/user"}
-	client := &http.Client{}
-	req, err := http.NewRequest("GET", apiURL.String(), nil)
-	if err != nil {
-		log.Fatalf("Error w/ listuser API call: %s\n", err)
-	}
-	auth := "Bearer " + c.Atoken
-	req.Header.Add("Authorization", auth)
-	resp, err := client.Do(req)
-	if err != nil {
-		log.Fatalln(err)
-	}
-	defer resp.Body.Close()
+	cursor := ""
+	apiURL := url.URL{
+		Scheme: "http",
+		Host:   "127.0.0.1:3000",
+		Path:   "api/v1/user"}
 
-	if resp.StatusCode != 200 {
-		log.Fatalln(resp.Status)
-	}
-	b, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		log.Fatalln(err)
-	}
+	for true {
+		apiURL.RawQuery = "limit=20" + cursor
+		client := &http.Client{}
+		req, err := http.NewRequest("GET", apiURL.String(), nil)
+		if err != nil {
+			log.Fatalf("Error w/ listuser API call: %s\n", err)
+		}
+		auth := "Bearer " + c.Atoken
+		req.Header.Add("Authorization", auth)
+		resp, err := client.Do(req)
+		if err != nil {
+			log.Fatalln(err)
+		}
+		defer resp.Body.Close()
 
-	log.Println(string(b))
+		if resp.StatusCode != 200 {
+			log.Fatalln(resp.Status)
+		}
+		b, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			log.Fatalln(err)
+		}
 
-	// TODO: Maybe add feature to automatically page results to screen. Keep pausing for keypress.
+		var res listUsers
+		err = json.Unmarshal(b, &res)
+		if err != nil {
+			log.Printf("Error parsing JSON response from API call. %v\n", err)
+		}
+		for _, user := range res.Data {
+			fmt.Printf("%s\t%s\t%s\n", user.UserID, user.Email, user.Role)
+		}
+		cursor = "&cursor=" + res.Page.Cursor
+		if res.Page.Qty == 0 {
+			return
+		}
 
-	var res addUserRetMsg
-	err = json.Unmarshal(b, &res)
-	if err != nil {
-		log.Printf("Error parsing JSON response from API call. %v\n", err)
+		fmt.Println("        ----- Press <ENTER> to continue -----")
+		scanner := bufio.NewScanner(os.Stdin)
+		for scanner.Scan() {
+			break
+		}
 	}
-	// TODO: Return hash going forward or email to user?
-	log.Printf("\n\nUser %s created. PW Hash:\n\n%s\n\n", res.Data.UserID, res.Data.Hash)
 
 	return
 }
