@@ -244,7 +244,6 @@ func addUserHandler(l *flag.FlagSet, p userParams) {
 		log.Printf("Error parsing JSON response from API call. %v\n", err)
 	}
 	if resp.StatusCode == 200 {
-		// TODO: Return hash going forward or email to user?
 		log.Printf("\n\nUser %s created. PW Hash:\n\n%s\n\n", res.Data.UserID, res.Data.Hash)
 	} else {
 		fmt.Printf("\nError: %s\n", res.Status.Message)
@@ -254,9 +253,6 @@ func addUserHandler(l *flag.FlagSet, p userParams) {
 }
 
 func listUserHandler(l *flag.FlagSet, p userParams) {
-
-	// TODO: sysadmin needs to be able to list users for any customerID. Enable this via the list users endpoint.
-
 	c, _ := readConfig()
 	if !validToken(c.Rtoken) {
 		fmt.Println("User not logged in.")
@@ -274,7 +270,6 @@ func listUserHandler(l *flag.FlagSet, p userParams) {
 		}
 	}
 
-	// TODO: Is user checked to be admin before calling API?
 	cursor := ""
 	apiURL := url.URL{
 		Scheme: "http",
